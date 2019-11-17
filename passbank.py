@@ -11,28 +11,23 @@ from cryptography.fernet import Fernet
 import shelve
 
 # specialized modules for this program
-from PassBankClasses import *
+from PassBankClasses import init_program
 from PB_interfaces import *
 from PB_Key import Key
+import tkinter as tk
 
 
-
-def initialize():
-    init_TkRoot = tk.Tk()
-    initInterface = init_Interface(init_TkRoot)
-    init = init_program(initInterface)
-    init.run()
-    return init.getAccessKey()
-
-
+# C:/Users/Admin/Documents/Python Projects
 
 def main():
-    # Run initialization program to get string for access key
-    access_key = initialize()
-    # Run main passback program
-    main_TkRoot = tk.Tk()
-    PB_main = PassBank(init.getAccessKey(), MainUI(main_TkRoot))
-    PB_main.run()
+    # Run initialization program to get a verified access key
+    init = init_program()
+    init.run()
+
+    key = init.getAccessKey()
+    root = tk.Tk()
+    PBMain = PB_MainUI(root, key)
+    PBMain.mainloop()
 
 
 if __name__ == "__main__":
