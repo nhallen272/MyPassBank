@@ -11,7 +11,7 @@ import tkinter as tk
 from PB_Key import Key
 from PB_interfaces import init_Interface
 import getpass
-# default key loc C:/Users/Admin/Documents/PassBank//access.key
+# default key loc C:/Users/["Current-User"]/Documents/PassBank//access.key
 
 
 class init_program:

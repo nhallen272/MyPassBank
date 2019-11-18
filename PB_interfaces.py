@@ -14,8 +14,9 @@ class init_Interface:
 
     def __init__(self, master):
         self.master = master
+        self.master.title("Verify Access")
+        self.master.geometry('240x80')
         # Check for access.key file
-        
         
     def verifyAccess(self):
         self.button = tk.Button(self.master, text="Done", command=self.__verifyAccess)
@@ -181,7 +182,7 @@ class PB_MainUI(tk.Frame):
         """Add a password to the database."""
         while True:
             passname, username, password = self.getPassData("ADD")
-            if passname[0:2] == "b'" or username[0:2] == "b'" or password[0:2]:
+            if type(passname) != str or type(username) != str or type(password) != str:
                 tk.messagebox.showwarning("Error", "Passwords cannot start with b'")
                 break
             else:
@@ -199,31 +200,36 @@ class PB_MainUI(tk.Frame):
 
     def EditPassword(self):
         """Edit the selected password."""
-        try:
-            if self.selected == None:
+        while True:
+            if self.selected is None:
                 tk.messagebox.showerror("Error", "Nothing Selected!")
-                pass
+                break
+
             else:
                 newUsername, newPassword = self.getPassData("EDIT")
-                passdata = self.selected
-                passname = passdata[0]
-                newUsername = self.crypter.encrypt(newUsername)
-                newPassword = self.crypter.encrypt(newPassword)
-                # change data at shelve key [username]
-                passBank = shelve.open(self.passbank_db)
-                # update values at that password name (key)
-                passBank[passname] = [newUsername, newPassword]
-                passBank.close()
-                self.populateLB()
-        except:
-            tk.messagebox.showerror("Error", "Nothing Selected!")
+                if type(newUsername) != str or type(newPassword) != str: # make sure given character don't come up as type bytes
+                    tk.messagebox.showwarning("Error", "Passwords cannot start with b'")
+                    break
+                else:
+                    passdata = self.selected
+                    passname = passdata[0]
+                    newUsername = self.crypter.encrypt(newUsername)
+                    newPassword = self.crypter.encrypt(newPassword)
+                    # change data at shelve key [username]
+                    passBank = shelve.open(self.passbank_db)
+                    # update values at that password name (key)
+                    passBank[passname] = [newUsername, newPassword]
+                    passBank.close()
+                    self.populateLB()
+        
+            
 
 
 
     def DelPassword(self):
-        """Delete a selected password.
-           Then confirm with a popup."""
-        if self.selected == None:
+        """Delete a selected password by
+           confirming with a popup."""
+        if self.selected is None:
             tk.messagebox.showwarning("Warning", "No row selected!") # show an error popup
         else:
             if tk.messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete?"):

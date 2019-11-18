@@ -24,13 +24,12 @@ class Key:
         iterations=100000,
         backend=default_backend()
         )
+        
         # key is generated
         self.key = base64.urlsafe_b64encode(kdf.derive(bytes_password))
         self.keyfile_Name = 'access.key'
         
             
-        
-
 
     def createKeyFile(self, path):
         """Saves the key in a file called access.key"""
