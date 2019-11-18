@@ -24,6 +24,9 @@ class init_Interface:
         self.label.grid(row = 1, column = 0, padx=2, pady=2)
         self.entry = tk.Entry(self.master, show="*")
         self.entry.grid(row = 1, column = 1, padx=2, pady=2)
+    
+    def setkeyfilePath(self, path):
+        self.keyfilePath = path
 
     
 
@@ -58,8 +61,8 @@ class init_Interface:
            a new access password, for like the first time using the program."""
         self.master.withdraw()
         while True:
-            newpass = tkinter.simpledialog.askstring("New Access Key", "Enter new access key password:")
-            np2 = tkinter.simpledialog.askstring("New Access Key", "Enter new acces key again to verify:")
+            newpass = tkinter.simpledialog.askstring("Create New Access Key", "Enter new access key password:", show="*")
+            np2 = tkinter.simpledialog.askstring("New Access Key", "Enter new access key again to verify:", show="*")
             if newpass == np2:
                 self.truepass = newpass
                 self.key = Key(self.truepass)
@@ -70,8 +73,6 @@ class init_Interface:
                 np2 = tk.messagebox.showwarning("New Access Key", "Passwords did not match!")
                 continue
         
-        
-
     
     def keyPath(self):
         """Creates pop-up window with entry to enter 
@@ -80,13 +81,9 @@ class init_Interface:
         keyfilepath = tkinter.simpledialog.askstring("Keyfile path", "Enter access.key folder path: ")
         self.master.deiconify()
         self.keyfilePath = keyfilepath
-        #self.master.withdraw()
-        #keypathwin = KeyPathDialog(self.master)
-        #keypathwin.master.mainloop()
-        #self.keyfilePath = keypathwin.getKeyPath()
-        #self.master.wait_window()
-        #self.master.deiconify()
+
     
+
     def getKeypath(self):
         return self.keyfilePath
     
@@ -94,25 +91,6 @@ class init_Interface:
     def getKey(self):
         return self.key
 
-
-class KeyPathDialog:
-    def __init__(self, master):
-        top = self.top = tk.Toplevel(master)
-        self.master = master
-
-        tk.Label(top, text="Enter access.key folder path").grid(row=1, column=0)
-        self.e = tk.Entry(top)
-        self.e.grid(row=1, column=1)
-
-        b = tk.Button(top, text="OK", command=self.ok)
-        b.grid(row=2, column=1)
-
-    def ok(self):
-        self.keyfilePath = self.e.get()
-        self.top.destroy()
-    
-    def getKeyPath(self):
-        return self.keyfilePath
 
 
 
@@ -153,10 +131,12 @@ class ToolBar:
 
 class PB_MainUI(tk.Frame):
     """User interface for main PassBank program."""
-    def __init__(self, root, Key_object):
+    def __init__(self, root, Key_object, directory):
         root.title("PassBank Pasword Manager")
         tk.Frame.__init__(self, root, height=500, width=600)
         self.root = root
+        self.directory = directory
+        self.passbank_db = self.directory + "\\passbankDB"
         # add encryption functions, save verified Key object in crypter
         self.crypter = Crypter(Key_object)
         
@@ -199,34 +179,44 @@ class PB_MainUI(tk.Frame):
 
     def AddPassword(self):
         """Add a password to the database."""
-        passname, username, password = self.getPassData("ADD")
-        # encrypt username and password
-        username = self.crypter.encrypt(username)
-        password = self.crypter.encrypt(password)
-        # add {passname:[username, password]} to passbank database
-        passbankDB = shelve.open('passbank.dat')
-        passbankDB[passname] = [username, password]
-        passbankDB.close()
-        #  update the mainlistbox
-        self.populateLB()
+        while True:
+            passname, username, password = self.getPassData("ADD")
+            if passname[0:2] == "b'" or username[0:2] == "b'" or password[0:2]:
+                tk.messagebox.showwarning("Error", "Passwords cannot start with b'")
+                break
+            else:
+                # encrypt username and password
+                username = self.crypter.encrypt(username)
+                password = self.crypter.encrypt(password)
+                # add {passname:[username, password]} to passbank database
+                passbankDB = shelve.open(self.passbank_db)
+                passbankDB[passname] = [username, password]
+                passbankDB.close()
+                #  update the mainlistbox
+                self.populateLB()
+                break
 
 
     def EditPassword(self):
         """Edit the selected password."""
-        if self.selected == None:
+        try:
+            if self.selected == None:
+                tk.messagebox.showerror("Error", "Nothing Selected!")
+                pass
+            else:
+                newUsername, newPassword = self.getPassData("EDIT")
+                passdata = self.selected
+                passname = passdata[0]
+                newUsername = self.crypter.encrypt(newUsername)
+                newPassword = self.crypter.encrypt(newPassword)
+                # change data at shelve key [username]
+                passBank = shelve.open(self.passbank_db)
+                # update values at that password name (key)
+                passBank[passname] = [newUsername, newPassword]
+                passBank.close()
+                self.populateLB()
+        except:
             tk.messagebox.showerror("Error", "Nothing Selected!")
-        else:
-            newUsername, newPassword = self.getPassData("EDIT")
-            passdata = self.selected
-            passname = passdata[0]
-            newUsername = self.crypter.encrypt(newUsername)
-            newPassword = self.crypter.encrypt(newPassword)
-            # change data at shelve key [username]
-            passBank = shelve.open('passbank.dat')
-            # update values at that password name (key)
-            passBank[passname] = [newUsername, newPassword]
-            passBank.close()
-            self.populateLB()
 
 
 
@@ -239,7 +229,7 @@ class PB_MainUI(tk.Frame):
             if tk.messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete?"):
                 passdata = self.selected
                 passname = passdata[0]
-                passBank = shelve.open('passbank.dat')
+                passBank = shelve.open(self.passbank_db)
                 del passBank[passname]
                 passBank.close()
                 # lastly update multilistbox
@@ -284,7 +274,7 @@ class PB_MainUI(tk.Frame):
 
 
     def __makePassbankDict(self):
-        passbank_DB = shelve.open('passbank.dat')
+        passbank_DB = shelve.open(self.passbank_db)
         passbankdict = dict(passbank_DB)
         passbank_DB.close()
         if len(passbankdict) == 0:

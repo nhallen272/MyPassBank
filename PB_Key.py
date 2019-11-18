@@ -13,22 +13,21 @@ class Key:
     def __init__(self, access_password):
         """Creates a Fernet encryption key, 
            given an access password."""
-        try:
-            self.strpass = access_password
-            bytes_password = access_password.encode() # converts to type bytes 
-            salt = b'\xcaO\xf8\xf8\xab\xd6\xb0\x0b@\xf5\xd5\xaf|\xca\x1b\xc1'
-            kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=100000,
-            backend=default_backend()
-            )
-            # key is generated
-            self.key = base64.urlsafe_b64encode(kdf.derive(bytes_password))
-            self.keyfile_Name = 'access.key'
-        except:
-            tkinter.messagebox.showerror("Key Creation Error", "Cannot create key from nothing!")
+        
+        self.strpass = access_password
+        bytes_password = access_password.encode() # converts to type bytes 
+        salt = b'\xcaO\xf8\xf8\xab\xd6\xb0\x0b@\xf5\xd5\xaf|\xca\x1b\xc1'
+        kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+        )
+        # key is generated
+        self.key = base64.urlsafe_b64encode(kdf.derive(bytes_password))
+        self.keyfile_Name = 'access.key'
+        
             
         
 
@@ -79,6 +78,7 @@ class Key:
 
     def __getAccesskeyfromShelf(self):
         path = self.keyfile_path
+        path = path[0:-11] # change directory to the main folder (minus '\\passbank.key')
         os.chdir(path)
         keyfile = shelve.open('access.key')
         truepass = keyfile['accesskey']

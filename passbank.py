@@ -11,7 +11,7 @@ from cryptography.fernet import Fernet
 import shelve
 
 # specialized modules for this program
-from PassBankClasses import init_program
+from PB__init__ import init_program
 from PB_interfaces import *
 from PB_Key import Key
 import tkinter as tk
@@ -23,10 +23,11 @@ def main():
     # Run initialization program to get a verified access key
     init = init_program()
     init.run()
-
+    
+    PBPath = init.getDirectories()
     key = init.getAccessKey()
     root = tk.Tk()
-    PBMain = PB_MainUI(root, key)
+    PBMain = PB_MainUI(root, key, PBPath)
     PBMain.mainloop()
 
 
